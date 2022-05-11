@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<script src="/socket.io/socket.io.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+    integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+    integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+    crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+    integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+    crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+    integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+    crossorigin="anonymous"></script>
+
+<head>
+    <title>TCP chat</title>
+    <style>
+        body {
+            background: #000;
+            background-image: url("https://thumbs.gfycat.com/ExemplaryBelovedEuropeanfiresalamander-size_restricted.gif");
+            background-size: cover;
+            height: 100vh !important;
+            padding: 0;
+            margin: 0 !important;
+
+        }
+
+        #message-container {
+            overflow: auto;
+            height: 550px !important;
+            display: flex;
+            flex-direction: column-reverse;
+        }
+
+        #input {
+            padding: 1rem;
+            margin-top: 5px;
+        }
+
+        #blockchain-container {
+            overflow: auto;
+            height: 550px !important;
+            display: flex;
+            flex-direction: column-reverse;
+        }
+
+        p {
+            font-family: Consolas, monaco, monospace;
+            font-size: 14px;
+            font-style: normal;
+            font-variant: normal;
+            font-weight: bold;
+            line-height: 20px;
+        }
+
+        .heker {
+            color: rgb(1, 105, 1);
+            background: #000;
+            font-weight: bold;
+        }
+
+        .chat-box {
+            margin-top: 30px !important;
+            background: rgb(51, 51, 51, 0.6);
+            padding: 30px;
+        }
+
+        a:link {
+            color: black !important;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container chat-box">
+        <div class="row">
+            <div class="col-sm-6 ">
+                <div id="message-container" class="overflow-auto heker">
+                    <ul id="messages" class="heker">
+
+                    </ul>
+                </div>
+            </div>
+            <div class="col-sm-6 ">
+                <div id="blockchain-container" class="overflow-auto heker">
+                    <p id="blockchain" class="heker p-2">
+
+                    </p>
+                </div>
+            </div>
+            <div class="col-sm-12 ">
+                <input id="input" class="heker"><button id="connect" class="btn btn-dark ml-2">Connect</button>
+                <button id="mine" class="btn btn-dark ml-5">Start MINING</button>
+            </div>
+            <div class="col-sm-4">
+                <ul id="connections" class="heker">
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div id="dowload-link">
+            </div>
+        </div>
+    </div>
+</body>
+<script src="socket.io.js"></script>
+<script src="socket.io-file-client.js"></script>
+<script>
+
+    $(document).ready(function () {
+
+        var socket = io();
+        ///let socket = undefined;
+        var input = document.getElementById('input');
+
+        $('#mine').click(function (e) {
+            e.preventDefault();
+            $("#mine").hide();
+            socket.emit('mine', "lols");
+        })
+
+
+        $("#connect").click(function (e) {
+            e.preventDefault();
+            if (input.value) {
+                socket.emit('p2p', input.value);
+                var item = document.createElement('li');
+                text = "<p>" + input.value + "</p>";
+                item.innerHTML = text
+                connections.appendChild(item);
+                input.value = '';
+                //$('#input').prop('disabled', true);
+                //$("#connect").hide()
+                //$("#disconnect").show();
+            }
+        });
+
+        $("#input").keyup(function (e) {
+            if (e.keyCode === 13) {
+                $("#connect").click();
+            }
+        });
+
+        /*$("#disconnect").click(function (e) {
+            e.preventDefault();
+            socket.emit("disconnect_p2p");
+            $("#disconnect").hide()
+            $("#connect").show();
+            input.value = '';
+            $('#input').prop('disabled', false);
+        });*/
+
+        socket.on('message', function (msg) {
+            console.log(msg);
+            var color = "";
+            if (msg == "New blockchain accepted") {
+                color = " color='yellow'"
+            }
+            var item = document.createElement('li');
+            text = `<p${color} >` + msg + "</p>";
+            item.innerHTML = text
+            messages.appendChild(item);
+        });
+        socket.on('e-message', function (msg) {
+            console.log(msg);
+            msg = msg
+            var item = document.createElement('li');
+            text = "<p color='red'>" + msg + "</p>";
+            item.innerHTML = text
+            messages.appendChild(item);
+        });
+        socket.on('mined', function (msg) {
+            console.log(msg);
+            var item = document.createElement('li');
+            text = "<p>" + msg + "</p>";
+            item.innerHTML = text
+            messages.appendChild(item);
+            socket.emit('mine', "mine");
+        });
+
+        socket.on('blockchain', function (blockchain) {
+            var string = "";
+            blockchain.chain.forEach(element => {
+                string += "Block: " + element.index + "<br>";
+                string += "Time stamp: " + element.timestamp + "<br>";
+                string += "Data: " + element.data + "<br>";
+                string += "Hash: " + element.hash + "<br>";
+                string += "Prev Hash: " + element.prevHash + "<br>";
+                string += "Nonce: " + element.nonce + "<br>";
+                string += "Difficulty: " + element.difficulty + "<br>";
+                string += "---------------------------------------------------------------<br>";
+            });
+            $("#blockchain").html(string);
+        });
+
+    });
+</script>
+
+</html>
